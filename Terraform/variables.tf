@@ -28,5 +28,5 @@ description = "Specifies the password for build server user"
 }
 
 variable "playbook" {
-  default = "./Ansible/playbooks/build_server_config.yaml"
+  default = "../Ansible/playbooks/build_server_config.yaml"
 }

@@ -105,6 +105,6 @@ resource "null_resource" "ansible" {
   depends_on = [azurerm_linux_virtual_machine.main]
 
   provisioner "local-exec" {
-  command = "ansible-playbook -u ${azurerm_linux_virtual_machine.main.front_admin_username} -i '${azurerm_linux_virtual_machine.main.public_ip_address},' --extra-vars \"ansible_password=${azurerm_linux_virtual_machine.main.front_admin_password} USER=${azurerm_linux_virtual_machine.main.front_admin_username}\" ${var.playbook}"
+  command = "ansible-playbook -u ${azurerm_linux_virtual_machine.main.admin_username} -i '${azurerm_linux_virtual_machine.main.public_ip_address},' --extra-vars \"ansible_password=${azurerm_linux_virtual_machine.main.admin_password} USER=${azurerm_linux_virtual_machine.main.admin_username}\" ${var.playbook}"
   }
 }
