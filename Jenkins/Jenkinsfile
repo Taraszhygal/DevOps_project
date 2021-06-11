@@ -1,0 +1,84 @@
+pipeline {
+    
+    agent any
+    
+    environment {
+        dockerImageF= ''
+        registryF = 'taraszhygal/nginx-front-server'
+        
+        dockerImageB = ''
+        registryB = 'taraszhygal/nginx-back-server'
+        
+        registryCredential = 'dockerhub_id'
+    }
+    stages {
+        stage('Sign in') {
+            steps {
+                checkout([$class: 'GitSCM', branches: [[name: '*/master']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/Taraszhygal/DevOps_project.git']]])
+            }
+        }
+        
+        stage('Build Docker image front') {
+            steps {
+                dir('./Docker/server_front') {
+                    script {
+                        dockerImageF = docker.build registryF
+                    }
+                }
+            }
+        }
+        
+        stage('Uploading ImageF') {
+            steps {
+                script {
+                    docker.withRegistry( '', registryCredential ) {
+                        dockerImageF.push()
+                    }
+                }
+            }
+        }
+        
+        stage('Docker Stop first container') {
+            steps {
+                sh 'docker ps -f name=mynginxContainerF -q | xargs --no-run-if-empty docker container stop'
+                sh 'docker container ls -a -fname=mynginxContainerF -q | xargs -r docker container rm'
+            }
+        }
+    
+        stage('Docker Run first container') {
+            steps {
+                script {
+                    dockerImageF.run("-p 80:80 --rm --name mynginxContainerF")
+                }
+            }
+        }
+        
+        
+        
+        stage('Build Docker image back') {
+            steps {
+                dir('./Docker/server_back') {
+                    script {
+                        dockerImageB = docker.build registryB
+                    }
+                }
+            }
+        }
+        
+        stage('Uploading ImageB') {
+            steps {
+                script {
+                    docker.withRegistry( '', registryCredential ) {
+                        dockerImageB.push()
+                    }
+                }
+            }
+        }
+        
+        stage('Execute Ansible playbook') {
+            steps {
+                ansiblePlaybook credentialsId: 'private-key', disableHostKeyChecking: true, installation: 'ansible', inventory: './Ansible/host.inv', playbook: './Ansible/playbooks/back_server_config.yaml'
+            }
+        }
+    }
+}
